@@ -53,7 +53,7 @@ export function Categories() {
     if (response.ok) {
       fetchCategories();
     } else {
-      alert("Failed to delete category");
+      alert("Failed to delete category.");
     }
   };
 
