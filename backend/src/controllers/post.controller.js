@@ -6,6 +6,24 @@ import cloudinary from "../config/cloudinary.js";
  * @desc Create a new post
  * @route POST /api/posts
  */
+// export const createPost = async (req, res) => {
+//     try {
+//         let mediaUrl = null;
+//         if (req.file) {
+//             const result = await cloudinary.uploader.upload(req.file.path, { resource_type: "auto" });
+//             mediaUrl = result.secure_url;
+//         }
+
+//         const post = new Post({ ...req.body, user: req.user.id, image: mediaUrl });
+//         await post.save();
+
+//         res.status(201).json(post);
+//     } catch (error) {
+//         res.status(500).json({ message: "Server Error", error: error.message });
+//     }
+// };
+
+
 export const createPost = async (req, res) => {
     try {
         let mediaUrl = null;
@@ -14,14 +32,21 @@ export const createPost = async (req, res) => {
             mediaUrl = result.secure_url;
         }
 
-        const post = new Post({ ...req.body, user: req.user.id, image: mediaUrl });
-        await post.save();
+        const post = new Post({
+            ...req.body,
+            category: req.body.category.trim(), // Ensure it's a string
+            user: req.user.id,
+            image: mediaUrl,
+        });
 
+        await post.save();
         res.status(201).json(post);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+
 
 /**
  * @desc Get all posts
@@ -120,45 +145,25 @@ export const unlikePost = async (req, res) => {
 };
 
 
-/**
- * @desc Comment on a post
- * @route POST /api/posts/:postId/comment
- */
-// export const commentOnPost = async (req, res) => {
+// /**
+//  * @desc Search posts by title or category
+//  * @route GET /api/posts/search
+//  */
+// export const searchPosts = async (req, res) => {
 //     try {
-//         const comment = { text: req.body.text, user: req.user.id };
-//         const post = await Post.findById(req.params.postId);
-//         post.comments.push(comment);
-//         await post.save();
-//         res.json(post);
+//         const { title, category } = req.query;
+
+//         let query = {};
+
+//         if (title) query.title = new RegExp(title, "i");
+//         if (category) query.category = new RegExp(category, "i");
+
+//         const posts = await Post.find(query).populate("user", "username").populate("category", "name");
+//         res.json(posts);
 //     } catch (error) {
 //         res.status(500).json({ message: "Server Error", error: error.message });
 //     }
 // };
-
-
-
-// export const commentOnPost = async (req, res) => {
-//     try {
-//         const { text } = req.body;
-//         const userId = req.user.id;
-//         const postId = req.params.postId;
-
-//         // Create and save the comment
-//         const comment = new Comment({ text, user: userId, post: postId });
-//         await comment.save();  // ✅ Save comment in database
-
-//         // Find the post and push the comment ID
-//         const post = await Post.findById(postId);
-//         post.comments.push(comment._id); // ✅ Push ObjectId, not full object
-//         await post.save();
-
-//         res.json({ message: "Comment added successfully", comment });
-//     } catch (error) {
-//         res.status(500).json({ message: "Server Error", error: error.message });
-//     }
-// };
-
 
 /**
  * @desc Search posts by title or category
@@ -167,15 +172,17 @@ export const unlikePost = async (req, res) => {
 export const searchPosts = async (req, res) => {
     try {
         const { title, category } = req.query;
-        
+
         let query = {};
 
-        if (title) query.title = new RegExp(title, "i");
-        if (category) query.category = new RegExp(category, "i");
+        if (title) query.title = new RegExp(title, "i"); // Case-insensitive title search
+        if (category) query.category = new RegExp(category, "i"); // Case-insensitive category search
 
-        const posts = await Post.find(query).populate("user", "username").populate("category", "name");
+        const posts = await Post.find(query).populate("user", "username"); // Removed .populate("category", "name")
+
         res.json(posts);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
